@@ -1,0 +1,60 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+jobs:
+  Xbox:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+        fetch-tags: true
+
+    # Git tags need to be generated before compilation so CI build picks up the latest release 
+    - name: Set release tag name
+      id: release_tag
+      run: echo "tag=v$(date +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+
+    - name: Create Git tag
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git tag "${{ steps.release_tag.outputs.tag }}"
+        git push origin "${{ steps.release_tag.outputs.tag }}"
+
+    - name: Compile program
+      run: |
+        docker run --rm \
+          -v "$(pwd)":/workspace -w /workspace \
+          ghcr.io/xboxdev/nxdk:latest \
+          sh -c "apk add --no-cache git && \
+                git config --global --add safe.directory /workspace && \
+                mkdir -p build && cd build && \
+                cmake .. -DCMAKE_TOOLCHAIN_FILE=/usr/src/nxdk/share/toolchain-nxdk.cmake -DCMAKE_BUILD_TYPE=Release && \
+                cmake --build ."
+
+    - name: Prepare artifact
+      run: |
+        mkdir -p artifact
+        cp build/default.xbe artifact/updater.xbe
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: xbmc-updater
+        path: artifact
+
+    - name: Create GitHub Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.release_tag.outputs.tag }}
+        name: "Build ${{ steps.release_tag.outputs.tag }}"
+        files: artifact/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

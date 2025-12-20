@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "name": "XBMC Updater",
+      "includePath": [
+        "${NXDK_DIR}/**",
+        "${NXDK_DIR}/lib/**",
+        "${workspaceFolder}/lib/**",
+        "${workspaceFolder}/src/**"
+      ],
+      "defines": [
+        "NXDK",
+        "_WIN32",
+        "_MSC_VER"
+      ],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-clang-x64",
+      "compilerArgs": []
+    }
+  ],
+  "version": 4
+}

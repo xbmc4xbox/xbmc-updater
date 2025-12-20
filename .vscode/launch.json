@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "configurations": [
+  {
+    "name": "XEMU (Debug)",
+    "type": "cppdbg",
+    "request": "launch",
+    "program": "${workspaceFolder}/build/updater.exe",
+    "targetArchitecture": "x86",
+    "miDebuggerServerAddress": "127.0.0.1:1234",
+    "miDebuggerPath": "gdb",
+    "cwd": "${workspaceFolder}/build",
+    "stopAtEntry": false,
+    "externalConsole": false,
+    "MIMode": "gdb",
+    "preLaunchTask": "Start xemu",
+    "setupCommands": [
+      {
+        "text": "set architecture i386"
+      },
+      {
+        "text": "set osabi none"
+      },
+      {
+        "text": "set disassembly-flavor intel"
+      },
+      {
+        "text": "add-symbol-file ${workspaceFolder}/build/updater.exe 0x11000"
+      }
+    ]
+  }
+  ]
+}
