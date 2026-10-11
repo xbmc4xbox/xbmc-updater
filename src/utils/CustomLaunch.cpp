@@ -1,9 +1,9 @@
 /*
- *  Copyright (C) 2025-2025
- *  This file is part of XBMC - https://github.com/antonic901/xbmc4xbox-redux
+ *  Copyright (C) 2023-2026 Team Xodi
+ *  This file is part of Xodi - https://xodi.tv
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
- *  See LICENSE.md for more information.
+ *  See LICENSES/README.md for more information.
  */
 
 #include "CustomLaunch.h"
@@ -27,6 +27,10 @@ void CCustomLaunch::Set(const std::string& key, const std::string& value)
   {
     m_updateChannel = value;
   }
+  else if (key == "perform_major_upgrade")
+  {
+    performMajorUpgrade = value == "true";
+  }
 }
 
 bool CCustomLaunch::Read()
@@ -39,8 +43,13 @@ bool CCustomLaunch::Read()
   if (launchType == LDT_NONE)
     return false;
 
+#ifndef _DEBUG
   CUSTOM_LAUNCH_DATA *data = (CUSTOM_LAUNCH_DATA*)launchData;
-  std::vector<std::string> params = StringUtils::Split(data->reserved, "&");
+  std::string strInput = data->reserved;
+#else
+  std::string strInput = "channel=stable&version=4.0.0&revision=8d97e131&perform_major_upgrade=false";
+#endif
+  std::vector<std::string> params = StringUtils::Split(strInput, "&");
   for (auto param : params)
   {
     size_t iPos = param.find("=");

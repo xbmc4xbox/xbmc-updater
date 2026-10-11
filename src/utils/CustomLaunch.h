@@ -1,9 +1,9 @@
 /*
- *  Copyright (C) 2025-2025
- *  This file is part of XBMC - https://github.com/antonic901/xbmc4xbox-redux
+ *  Copyright (C) 2023-2026 Team Xodi
+ *  This file is part of Xodi - https://xodi.tv
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
- *  See LICENSE.md for more information.
+ *  See LICENSES/README.md for more information.
  */
 
 #pragma once
@@ -35,10 +35,14 @@ public:
   std::string GetRevision() const { return m_revision; }
   std::string GetUpdateChannel() const { return m_updateChannel; }
 
+  bool GetPerformMajorUpgrade() const { return performMajorUpgrade; }
+
 private:
   void Set(const std::string& key, const std::string& value);
 
   std::string m_version;
   std::string m_revision;
   std::string m_updateChannel;
+
+  bool performMajorUpgrade = false;
 };

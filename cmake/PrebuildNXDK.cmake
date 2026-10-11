@@ -6,7 +6,11 @@ get_filename_component(ABS_TOOLCHAIN_PATH "${CMAKE_TOOLCHAIN_FILE}" ABSOLUTE)
 get_filename_component(NXDK_SHARE_DIR "${ABS_TOOLCHAIN_PATH}" DIRECTORY)
 get_filename_component(NXDK_SOURCE_DIR "${NXDK_SHARE_DIR}" DIRECTORY)
 
-if (NOT EXISTS "${NXDK_SOURCE_DIR}/lib/libnxdk.lib" OR NOT EXISTS "${NXDK_SOURCE_DIR}/tools/extract-xiso/build/extract-xiso")
+if (NOT EXISTS "${NXDK_SOURCE_DIR}/lib/libnxdk.lib" OR
+    NOT EXISTS "${NXDK_SOURCE_DIR}/lib/libSDL2.lib" OR
+    NOT EXISTS "${NXDK_SOURCE_DIR}/lib/libSDL_ttf.lib" OR
+    NOT EXISTS "${NXDK_SOURCE_DIR}/lib/libfreetype.lib" OR
+    NOT EXISTS "${NXDK_SOURCE_DIR}/tools/extract-xiso/build/extract-xiso")
     message(STATUS "Bootstrapping NXDK build in ${NXDK_SOURCE_DIR}.")
 
     find_program(MAKE_COMMAND NAMES gmake make REQUIRED)
@@ -20,7 +24,7 @@ if (NOT EXISTS "${NXDK_SOURCE_DIR}/lib/libnxdk.lib" OR NOT EXISTS "${NXDK_SOURCE
                 cd bin &&
                 . activate -s &&
                 cd .. &&
-                DEBUG=${NXDK_DEBUG_FLAG} NXDK_ONLY=y ${MAKE_COMMAND} -j &&
+                DEBUG=${NXDK_DEBUG_FLAG} NXDK_ONLY=y NXDK_SDL=y ${MAKE_COMMAND} -j &&
                 ${MAKE_COMMAND} tools -j
             "
     )

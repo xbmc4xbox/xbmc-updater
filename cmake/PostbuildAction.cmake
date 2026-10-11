@@ -20,6 +20,12 @@ function(add_xbox_build_steps TARGET_NAME XBE_TITLE XBOX_ISO_DIR)
         COMMAND ${CMAKE_COMMAND} -E copy
                 "${CMAKE_CURRENT_BINARY_DIR}/default.xbe"
                 "${XBOX_ISO_DIR}/default.xbe"
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${CMAKE_SOURCE_DIR}/src/fonts/LICENSE-DejaVu.txt"
+                "${CMAKE_CURRENT_BINARY_DIR}/LICENSE-DejaVu.txt"
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${CMAKE_SOURCE_DIR}/src/fonts/LICENSE-DejaVu.txt"
+                "${XBOX_ISO_DIR}/LICENSE-DejaVu.txt"
         COMMAND "${CMAKE_COMMAND}" -E env
                 ${NXDK_DIR}/tools/extract-xiso/build/extract-xiso
                 -c ${XBOX_ISO_DIR}

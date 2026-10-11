@@ -18,6 +18,8 @@
 
 #include "StringUtils.h"
 
+#include <algorithm>
+
 using namespace std;
 
 #define FORMAT_BLOCK_SIZE 512 // # of bytes for initial allocation for printf
@@ -74,6 +76,13 @@ string StringUtils::FormatV(const char *fmt, va_list args)
   }
 
   return ""; // unreachable
+}
+
+std::string StringUtils::ToLower(const std::string& str)
+{
+  std::string result(str.size(), '\0');
+  std::transform(str.begin(), str.end(), result.begin(), ::tolower);
+  return result;
 }
 
 bool StringUtils::EqualsNoCase(const std::string &str1, const std::string &str2)

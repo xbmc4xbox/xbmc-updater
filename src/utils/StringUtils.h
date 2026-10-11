@@ -33,6 +33,7 @@ class StringUtils
 public:
   static std::string Format(PRINTF_FORMAT_STRING const char *fmt, ...) PARAM1_PRINTF_FORMAT;
   static std::string FormatV(PRINTF_FORMAT_STRING const char *fmt, va_list args);
+  static std::string ToLower(const std::string& str);
   static bool EqualsNoCase(const std::string &str1, const std::string &str2);
   static bool EqualsNoCase(const std::string &str1, const char *s2);
   static bool EqualsNoCase(const char *s1, const char *s2);
