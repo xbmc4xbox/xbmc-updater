@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cstdint>
 #include <fstream>
 #include <map>
 #include <stdio.h>
@@ -281,7 +282,8 @@ bool CUpdater::Download()
   }
 
   CDownloader downloader;
-  if (!downloader.Download(strAssetLink, "Z:\\Xodi.tar"))
+  if (!downloader.Download(strAssetLink, "Z:\\Xodi.tar", [this](unsigned int progress)
+                           { m_listener->OnProgress(progress, UpdaterState::DOWNLOADING_UPDATE); }))
   {
     m_listener->OnError(UpdaterError::DOWNLOAD_ERROR);
     return false;
@@ -309,6 +311,25 @@ bool CUpdater::Extract()
     mtar_close(&tar);
     m_listener->OnError(UpdaterError::EXTRACT_ERROR);
     return false;
+  };
+
+  FILE* archive = static_cast<FILE*>(tar.stream);
+  if (fseek(archive, 0, SEEK_END) != 0)
+    return failExtraction();
+  const long archiveSize = ftell(archive);
+  if (archiveSize <= 0 || mtar_rewind(&tar) != MTAR_ESUCCESS)
+    return failExtraction();
+
+  unsigned int lastProgress = 0;
+  const auto reportProgress = [&](uint64_t position)
+  {
+    const auto progress = static_cast<unsigned int>(
+        std::min<uint64_t>(99, position * 100 / static_cast<uint64_t>(archiveSize)));
+    if (progress > lastProgress)
+    {
+      lastProgress = progress;
+      m_listener->OnProgress(progress, UpdaterState::EXTRACTING_UPDATE);
+    }
   };
 
   /* Extract new build to E:\Xodi_NEW\ */
@@ -355,6 +376,7 @@ bool CUpdater::Extract()
       strLongPath = longPath;
       if (strLongPath.empty() || mtar_next(&tar) != MTAR_ESUCCESS)
         return failExtraction();
+      reportProgress(tar.pos);
       continue;
     }
 
@@ -391,6 +413,7 @@ bool CUpdater::Extract()
         if (fwrite(buffer, 1, chunk_size, destination_file) != chunk_size)
           return failExtraction();
         remaining -= chunk_size;
+        reportProgress(static_cast<uint64_t>(tar.last_header) + 512 + header.size - remaining);
       }
 
       const int closeResult = fclose(destination_file);
@@ -400,6 +423,7 @@ bool CUpdater::Extract()
     }
     if (mtar_next(&tar) != MTAR_ESUCCESS)
       return failExtraction();
+    reportProgress(tar.pos);
   }
 
   if (mtar_close(&tar) != MTAR_ESUCCESS)
@@ -407,6 +431,8 @@ bool CUpdater::Extract()
     m_listener->OnError(UpdaterError::EXTRACT_ERROR);
     return false;
   }
+
+  m_listener->OnProgress(100, UpdaterState::EXTRACTING_UPDATE);
   return true;
 }
 

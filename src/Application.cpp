@@ -68,7 +68,7 @@ CApplication::CApplication()
   m_strSubtitle = "Sit tight while we update Xodi.";
   m_strBody = StringUtils::Format(BODY_TEMPLATE, UpdaterState::PREPARATION, UpdaterState::FINISHED,
                                   "Initializing...");
-  m_strSmall = "Your console will restart after the update.  %i%";
+  m_strSmall = "Your console will restart after the update.  %i%%";
 }
 
 CApplication::~CApplication()
@@ -268,6 +268,9 @@ void CApplication::OnProgress(const unsigned int progress,
                                       "Xodi has been updated! Rebooting in 5s...");
       break;
   }
+
+  if (progress != 0 && state != UpdaterState::NONE)
+    m_strBody += StringUtils::Format(" (%u%%)", std::min(progress, 100u));
 
   m_iTotalPercentage = static_cast<int>(state) * 100 / static_cast<int>(UpdaterState::FINISHED);
   m_isDirty = true;

@@ -10,6 +10,11 @@
 
 #include "utils/StringUtils.h"
 
+#include <algorithm>
+#include <cerrno>
+#include <cstdint>
+#include <cstdlib>
+
 #include <windows.h>
 
 const unsigned char cert[] = {
@@ -179,7 +184,9 @@ bool CDownloader::Get(const std::string& strURL, std::string& strBody)
   return true;
 }
 
-bool CDownloader::Download(const std::string& strDownloadLink, const std::string& strDownloadPath)
+bool CDownloader::Download(const std::string& strDownloadLink,
+                           const std::string& strDownloadPath,
+                           const std::function<void(unsigned int)>& onProgress)
 {
   mbedtls_ssl_session_reset(&ssl);
 
@@ -222,63 +229,134 @@ bool CDownloader::Download(const std::string& strDownloadLink, const std::string
     return false;
   }
 
+  // Headers can span several TLS reads; retain any body bytes in the last read.
   char buffer[4096];
-  ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer));
-  if (ret <= 0)
-    return false;
-
-  std::string strHeader(buffer);
-  if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 4") ||
-      StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 5"))
-    return false;
-
-  if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 302"))
+  std::string response;
+  size_t headerEnd;
+  while ((headerEnd = response.find("\r\n\r\n")) == std::string::npos)
   {
-    size_t iPos = strHeader.find("Location: ");
-    if (iPos == std::string::npos)
+    ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer));
+    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
+      continue;
+    if (ret <= 0 || response.size() + ret > 65536)
+    {
+      mbedtls_ssl_close_notify(&ssl);
+      mbedtls_net_free(&server_fd);
       return false;
+    }
+    response.append(buffer, ret);
+  }
 
-    std::string strRedirectLink = strHeader.substr(iPos + 10);
-    iPos = strRedirectLink.find("\r\n");
-    if (iPos == std::string::npos)
-      return false;
+  const std::string headers = response.substr(0, headerEnd);
+  const auto headerValue = [&](const std::string& name)
+  {
+    size_t pos = headers.find("\r\n");
+    while (pos != std::string::npos)
+    {
+      pos += 2;
+      const size_t end = headers.find("\r\n", pos);
+      const std::string line = headers.substr(pos, end == std::string::npos ? end : end - pos);
+      const size_t colon = line.find(':');
+      if (colon != std::string::npos && StringUtils::EqualsNoCase(line.substr(0, colon), name))
+      {
+        const size_t first = line.find_first_not_of(" \t", colon + 1);
+        if (first == std::string::npos)
+          return std::string();
+        return line.substr(first, line.find_last_not_of(" \t") - first + 1);
+      }
+      pos = end;
+    }
+    return std::string();
+  };
 
-    strRedirectLink = strRedirectLink.substr(0, iPos);
-
+  if (StringUtils::StartsWithNoCase(headers, "HTTP/1.1 302 "))
+  {
+    const std::string location = headerValue("Location");
     mbedtls_ssl_close_notify(&ssl);
     mbedtls_net_free(&server_fd);
-    return Download(strRedirectLink, strDownloadPath);
+    return !location.empty() && Download(location, strDownloadPath, onProgress);
+  }
+  // This downloader accepts plain response bodies, not chunked transfer framing.
+  if (!StringUtils::StartsWithNoCase(headers, "HTTP/1.1 200 ") ||
+      !headerValue("Transfer-Encoding").empty())
+  {
+    mbedtls_ssl_close_notify(&ssl);
+    mbedtls_net_free(&server_fd);
+    return false;
   }
 
-  DWORD written = 0;
+  const std::string length = headerValue("Content-Length");
+  uint64_t totalBytes = 0;
+  const bool hasLength = !length.empty();
+  if (hasLength)
+  {
+    char* end = nullptr;
+    errno = 0;
+    totalBytes = strtoull(length.c_str(), &end, 10);
+    if (errno == ERANGE || *end != '\0' || length[0] < '0' || length[0] > '9')
+    {
+      mbedtls_ssl_close_notify(&ssl);
+      mbedtls_net_free(&server_fd);
+      return false;
+    }
+  }
+
   HANDLE hFile = CreateFileA(strDownloadPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                              FILE_ATTRIBUTE_NORMAL, NULL);
-  if (hFile != INVALID_HANDLE_VALUE)
+  if (hFile == INVALID_HANDLE_VALUE)
   {
-    bool foundBody = false;
-    std::string strHeaderCache;
-    do
-    {
-      if (!foundBody)
-      {
-        strHeaderCache.append(buffer, ret);
-        size_t iPos = strHeaderCache.find("\r\n\r\n");
-        if (iPos != std::string::npos)
-        {
-          foundBody = true;
-          size_t iBodyPos = iPos + 4;
-          WriteFile(hFile, strHeaderCache.data() + iBodyPos, strHeaderCache.size() - iBodyPos,
-                    &written, NULL);
-        }
-      }
-      else
-        WriteFile(hFile, buffer, ret, &written, NULL);
-    } while ((ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer))) > 0);
-    CloseHandle(hFile);
+    mbedtls_ssl_close_notify(&ssl);
+    mbedtls_net_free(&server_fd);
+    return false;
   }
+
+  uint64_t downloadedBytes = 0;
+  unsigned int lastProgress = 0;
+  const auto writeBody = [&](const char* data, size_t size)
+  {
+    if (hasLength && size > totalBytes - downloadedBytes)
+      return false;
+    DWORD written = 0;
+    if (size && (!WriteFile(hFile, data, size, &written, NULL) || written != size))
+      return false;
+    downloadedBytes += size;
+    if (onProgress && totalBytes > 0)
+    {
+      const auto progress =
+          static_cast<unsigned int>(std::min(99.0, 100.0 * downloadedBytes / totalBytes));
+      if (progress > lastProgress)
+      {
+        lastProgress = progress;
+        onProgress(progress);
+      }
+    }
+    return true;
+  };
+
+  const size_t bodyStart = headerEnd + 4;
+  bool success = writeBody(response.data() + bodyStart, response.size() - bodyStart);
+  while (success && (!hasLength || downloadedBytes < totalBytes))
+  {
+    ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer));
+    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
+      continue;
+    if (ret <= 0)
+    {
+      success = (ret == 0 || ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) &&
+                (!hasLength || downloadedBytes == totalBytes);
+      break;
+    }
+    success = writeBody(buffer, ret);
+  }
+
+  if (!CloseHandle(hFile))
+    success = false;
 
   mbedtls_ssl_close_notify(&ssl);
   mbedtls_net_free(&server_fd);
 
-  return written != 0;
+  if (success && onProgress)
+    onProgress(100);
+
+  return success;
 }

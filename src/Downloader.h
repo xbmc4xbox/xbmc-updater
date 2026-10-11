@@ -6,6 +6,7 @@
  *  See LICENSES/README.md for more information.
  */
 
+#include <functional>
 #include <string>
 
 #include <mbedtls/ctr_drbg.h>
@@ -24,7 +25,9 @@ public:
 
   bool Get(const std::string& strURL, std::string& strBody);
 
-  bool Download(const std::string& strDownloadLink, const std::string& strDownloadPath);
+  bool Download(const std::string& strDownloadLink,
+                const std::string& strDownloadPath,
+                const std::function<void(unsigned int)>& onProgress = {});
 
 private:
   void Initialize();
