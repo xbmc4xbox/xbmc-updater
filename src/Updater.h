@@ -1,55 +1,54 @@
 /*
- *  Copyright (C) 2025-2025
- *  This file is part of XBMC - https://github.com/antonic901/xbmc4xbox-redux
+ *  Copyright (C) 2023-2026 Team Xodi
+ *  This file is part of Xodi - https://xodi.tv
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
- *  See LICENSE.md for more information.
+ *  See LICENSES/README.md for more information.
  */
 
 #pragma once
 
-#include <string>
+#include "interfaces/IUpdater.h"
+#include "threads/Thread.h"
 
-enum class UpdaterStatus
-{
-  PREPARE,
-  CHECK_FOR_UPDATE,
-  DOWNLOAD_BUILD,
-  EXTRACT_BUILD,
-  COPY_USERDATA,
-  FINISHED,
-  ERROR
-};
-
-class CUpdater
+class CUpdater : public CThread
 {
 public:
-  CUpdater(std::string strRootPath);
-  ~CUpdater() = default;
+  CUpdater(const std::string& strRootPath);
+  ~CUpdater() override;
 
-  int Process();
+  void RegisterListener(IUpdater* listener);
 
-  void OnError();
-
-  inline UpdaterStatus GetStatus() { return m_status; }
+protected:
+  void Process() override;
 
 private:
-  int Prepare();
-  int CheckForUpdate();
-  int Download();
-  int Extract();
-  int Install();
-  std::string FindAsset(const std::string& strAsset) const;
+  bool Initialize();
+  bool Prepare();
+  bool CheckForUpdate();
+  bool Download();
+  bool Extract();
+  bool Install();
 
-  std::string m_strRootPath;
-  std::string m_strUpdatePath;
-  std::string m_strExtractPath;
+  std::string FindAsset(const std::string& strAsset, const std::string& strTag) const;
 
-  std::string m_currentRevision;
-  std::string m_latestRevision;
-  std::string m_updateChannel;
+  std::string m_strRootPath; /* E:\Xodi\ */
+  std::string m_strExtractPath; /* E:\Xodi_NEW\ */
 
-  std::string m_strError;
+  std::string m_updateChannel; /* stable / nightly */
 
-  UpdaterStatus m_status = UpdaterStatus::PREPARE;
+  // Used by stable channel
+  std::string m_version; // 4.0.0
+  std::string m_upstreamVersion; // 5.0.0
+
+  // Used by nightly channel
+  std::string m_revision; // 8cfcde4
+  std::string m_upstreamRevision; // 71162ed
+
+  bool m_performMajorUpgrade =
+      false; // if false, updater wont do major upgrades (ex. 4.x.x -> 5.x.x)
+
+  IUpdater* m_listener;
+
+  UpdaterState m_state = UpdaterState::NONE;
 };

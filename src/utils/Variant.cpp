@@ -19,15 +19,15 @@
 
 #ifndef strtoll
 #ifdef TARGET_WINDOWS
-#define strtoll  _strtoi64
+#define strtoll _strtoi64
 #define strtoull _strtoui64
-#define wcstoll  _wcstoi64
+#define wcstoll _wcstoi64
 #define wcstoull _wcstoui64
 #else // TARGET_WINDOWS
 #if !defined(TARGET_DARWIN)
-#define strtoll(str, endptr, base)  (int64_t)strtod(str, endptr)
+#define strtoll(str, endptr, base) (int64_t)strtod(str, endptr)
 #define strtoull(str, endptr, base) (uint64_t)strtod(str, endptr)
-#define wcstoll(str, endptr, base)  (int64_t)wcstod(str, endptr)
+#define wcstoll(str, endptr, base) (int64_t)wcstod(str, endptr)
 #define wcstoull(str, endptr, base) (uint64_t)wcstod(str, endptr)
 #endif
 #endif // TARGET_WINDOWS
@@ -70,7 +70,7 @@ int64_t str2int64(std::string_view str, int64_t fallback /* = 0 */)
 
 int64_t str2int64(std::wstring_view str, int64_t fallback /* = 0 */)
 {
-  wchar_t *end = NULL;
+  wchar_t* end = NULL;
   std::wstring tmp(trim(str));
   int64_t result = wcstoll(tmp.c_str(), &end, 0);
   if (end == NULL || *end == '\0')
@@ -92,7 +92,7 @@ uint64_t str2uint64(std::string_view str, uint64_t fallback /* = 0 */)
 
 uint64_t str2uint64(std::wstring_view str, uint64_t fallback /* = 0 */)
 {
-  wchar_t *end = NULL;
+  wchar_t* end = NULL;
   std::wstring tmp(trim(str));
   uint64_t result = wcstoull(tmp.c_str(), &end, 0);
   if (end == NULL || *end == '\0')
@@ -138,8 +138,7 @@ double str2double(std::wstring_view str, double fallback /* = 0.0 */)
   return fallback;
 }
 
-CVariant::CVariant()
-  : CVariant(VariantTypeNull)
+CVariant::CVariant() : CVariant(VariantTypeNull)
 {
 }
 
@@ -246,7 +245,7 @@ CVariant::CVariant(std::wstring&& str) : m_data(std::in_place_type<std::wstring>
 {
 }
 
-CVariant::CVariant(const std::vector<std::string> &strArray)
+CVariant::CVariant(const std::vector<std::string>& strArray)
 {
   VariantArray tmpArray;
   tmpArray.reserve(strArray.size());
@@ -266,7 +265,7 @@ CVariant::CVariant(std::vector<std::string>&& strArray)
   m_data = std::move(tmpArray);
 }
 
-CVariant::CVariant(const std::map<std::string, std::string> &strMap)
+CVariant::CVariant(const std::map<std::string, std::string>& strMap)
 {
   VariantMap tmpMap;
   for (const auto& elem : strMap)
@@ -369,13 +368,12 @@ CVariant::VariantType CVariant::type() const
 
 int64_t CVariant::asInteger(int64_t fallback) const
 {
-  return std::visit(overloaded{[](int64_t i) { return i; },
-                               [](uint64_t u) { return static_cast<int64_t>(u); },
-                               [](double d) { return static_cast<int64_t>(d); },
-                               [=](const std::string& s) { return str2int64(s, fallback); },
-                               [=](const std::wstring& ws) { return str2int64(ws, fallback); },
-                               [=](const auto&) { return fallback; }},
-                    m_data);
+  return std::visit(
+      overloaded{[](int64_t i) { return i; }, [](uint64_t u) { return static_cast<int64_t>(u); },
+                 [](double d) { return static_cast<int64_t>(d); }, [=](const std::string& s)
+                 { return str2int64(s, fallback); }, [=](const std::wstring& ws)
+                 { return str2int64(ws, fallback); }, [=](const auto&) { return fallback; }},
+      m_data);
 }
 
 int32_t CVariant::asInteger32(int32_t fallback) const
@@ -385,13 +383,12 @@ int32_t CVariant::asInteger32(int32_t fallback) const
 
 uint64_t CVariant::asUnsignedInteger(uint64_t fallback) const
 {
-  return std::visit(overloaded{[](uint64_t u) { return u; },
-                               [](int64_t i) { return static_cast<uint64_t>(i); },
-                               [](double d) { return static_cast<uint64_t>(d); },
-                               [=](const std::string& s) { return str2uint64(s, fallback); },
-                               [=](const std::wstring& ws) { return str2uint64(ws, fallback); },
-                               [=](const auto&) { return fallback; }},
-                    m_data);
+  return std::visit(
+      overloaded{[](uint64_t u) { return u; }, [](int64_t i) { return static_cast<uint64_t>(i); },
+                 [](double d) { return static_cast<uint64_t>(d); }, [=](const std::string& s)
+                 { return str2uint64(s, fallback); }, [=](const std::wstring& ws)
+                 { return str2uint64(ws, fallback); }, [=](const auto&) { return fallback; }},
+      m_data);
 }
 
 uint32_t CVariant::asUnsignedInteger32(uint32_t fallback) const
@@ -401,14 +398,14 @@ uint32_t CVariant::asUnsignedInteger32(uint32_t fallback) const
 
 double CVariant::asDouble(double fallback) const
 {
-  return std::visit(
-      overloaded{
-          [](double d) { return d; }, [](int64_t i) { return static_cast<double>(i); },
-          [](uint64_t u) { return static_cast<double>(u); },
-          [=](const std::string& s) { return static_cast<double>(str2uint64(s, fallback)); },
-          [=](const std::wstring& ws) { return static_cast<double>(str2uint64(ws, fallback)); },
-          [=](const auto&) { return fallback; }},
-      m_data);
+  return std::visit(overloaded{[](double d) { return d; },
+                               [](int64_t i) { return static_cast<double>(i); }, [](uint64_t u)
+                               { return static_cast<double>(u); }, [=](const std::string& s)
+                               { return static_cast<double>(str2uint64(s, fallback)); },
+                               [=](const std::wstring& ws)
+                               { return static_cast<double>(str2uint64(ws, fallback)); },
+                               [=](const auto&) { return fallback; }},
+                    m_data);
 }
 
 float CVariant::asFloat(float fallback) const
@@ -419,12 +416,11 @@ float CVariant::asFloat(float fallback) const
 bool CVariant::asBoolean(bool fallback) const
 {
   return std::visit(
-      overloaded{
-          [](bool b) { return b; }, [](int64_t i) { return i != 0; },
-          [](uint64_t u) { return u != 0; }, [](double d) { return d != 0; },
-          [](const std::string& s) { return !(s.empty() || s == "0" || s == "false"); },
-          [](const std::wstring& ws) { return !(ws.empty() || ws == L"0" || ws == L"false"); },
-          [=](const auto&) { return fallback; }},
+      overloaded{[](bool b) { return b; }, [](int64_t i) { return i != 0; }, [](uint64_t u)
+                 { return u != 0; }, [](double d) { return d != 0; }, [](const std::string& s)
+                 { return !(s.empty() || s == "0" || s == "false"); }, [](const std::wstring& ws)
+                 { return !(ws.empty() || ws == L"0" || ws == L"false"); },
+                 [=](const auto&) { return fallback; }},
       m_data);
 }
 
@@ -478,7 +474,8 @@ CVariant& CVariant::operator[](const std::string& key) &
 
 const CVariant& CVariant::operator[](const std::string& key) const&
 {
-  return std::visit(overloaded{[&](const VariantMap& m) -> const CVariant& {
+  return std::visit(overloaded{[&](const VariantMap& m) -> const CVariant&
+                               {
                                  auto it = m.find(key);
                                  return it != m.cend() ? it->second : ConstNullVariant;
                                },
@@ -488,7 +485,8 @@ const CVariant& CVariant::operator[](const std::string& key) const&
 
 CVariant CVariant::operator[](const std::string& key) &&
 {
-  return std::visit(overloaded{[&](VariantMap& m) -> CVariant {
+  return std::visit(overloaded{[&](VariantMap& m) -> CVariant
+                               {
                                  auto it = m.find(key);
                                  return it != m.cend() ? std::move(it->second) : ConstNullVariant;
                                },
@@ -498,33 +496,30 @@ CVariant CVariant::operator[](const std::string& key) &&
 
 CVariant& CVariant::operator[](unsigned int position) &
 {
-  return std::visit(overloaded{[&](VariantArray& a) -> CVariant& {
-                                 return a.size() > position ? a[position] : ConstNullVariant;
-                               },
+  return std::visit(overloaded{[&](VariantArray& a) -> CVariant&
+                               { return a.size() > position ? a[position] : ConstNullVariant; },
                                [](auto&) -> CVariant& { return ConstNullVariant; }},
                     m_data);
 }
 
 const CVariant& CVariant::operator[](unsigned int position) const&
 {
-  return std::visit(overloaded{[&](const VariantArray& a) -> const CVariant& {
-                                 return a.size() > position ? a[position] : ConstNullVariant;
-                               },
+  return std::visit(overloaded{[&](const VariantArray& a) -> const CVariant&
+                               { return a.size() > position ? a[position] : ConstNullVariant; },
                                [](const auto&) -> const CVariant& { return ConstNullVariant; }},
                     m_data);
 }
 
 CVariant CVariant::operator[](unsigned int position) &&
 {
-  return std::visit(overloaded{[&](VariantArray& a) -> CVariant {
-                                 return a.size() > position ? std::move(a[position])
-                                                            : ConstNullVariant;
-                               },
-                               [](auto&) -> CVariant { return ConstNullVariant; }},
-                    m_data);
+  return std::visit(
+      overloaded{[&](VariantArray& a) -> CVariant
+                 { return a.size() > position ? std::move(a[position]) : ConstNullVariant; },
+                 [](auto&) -> CVariant { return ConstNullVariant; }},
+      m_data);
 }
 
-CVariant &CVariant::operator=(const CVariant &rhs)
+CVariant& CVariant::operator=(const CVariant& rhs)
 {
   if (type() == VariantTypeConstNull || this == &rhs)
     return *this;
@@ -543,7 +538,7 @@ CVariant& CVariant::operator=(CVariant&& rhs) noexcept
   return *this;
 }
 
-bool CVariant::operator==(const CVariant &rhs) const
+bool CVariant::operator==(const CVariant& rhs) const
 {
   return m_data == rhs.m_data;
 }
@@ -558,7 +553,7 @@ void CVariant::reserve(size_t length)
     std::get<VariantArray>(m_data).reserve(length);
 }
 
-void CVariant::push_back(const CVariant &variant)
+void CVariant::push_back(const CVariant& variant)
 {
   if (type() == VariantTypeNull)
   {
@@ -569,7 +564,7 @@ void CVariant::push_back(const CVariant &variant)
     std::get<VariantArray>(m_data).emplace_back(variant);
 }
 
-void CVariant::push_back(CVariant &&variant)
+void CVariant::push_back(CVariant&& variant)
 {
   if (type() == VariantTypeNull)
   {
@@ -580,7 +575,7 @@ void CVariant::push_back(CVariant &&variant)
     std::get<VariantArray>(m_data).emplace_back(std::move(variant));
 }
 
-void CVariant::append(const CVariant &variant)
+void CVariant::append(const CVariant& variant)
 {
   push_back(variant);
 }
@@ -590,7 +585,7 @@ void CVariant::append(CVariant&& variant)
   push_back(std::move(variant));
 }
 
-const char *CVariant::c_str() const
+const char* CVariant::c_str() const
 {
   return std::visit(overloaded{[](const std::string& s) { return s.c_str(); },
                                [](const auto&) -> const char* { return nullptr; }},
@@ -676,9 +671,8 @@ bool CVariant::empty() const
   return std::visit(overloaded{[](const VariantMap& m) { return m.empty(); },
                                [](const VariantArray& a) { return a.empty(); },
                                [](const std::string& s) { return s.empty(); },
-                               [](const std::wstring& w) { return w.empty(); },
-                               [](const Null& n) { return true; },
-                               [](const auto&) { return false; }},
+                               [](const std::wstring& w) { return w.empty(); }, [](const Null& n)
+                               { return true; }, [](const auto&) { return false; }},
                     m_data);
 }
 
@@ -690,7 +684,7 @@ void CVariant::clear()
              m_data);
 }
 
-void CVariant::erase(const std::string &key)
+void CVariant::erase(const std::string& key)
 {
   std::visit(overloaded{[&](Null&) { m_data = VariantMap{}; }, [&](VariantMap& m) { m.erase(key); },
                         [](const auto&) {}},
@@ -704,7 +698,7 @@ void CVariant::erase(unsigned int position)
              m_data);
 }
 
-bool CVariant::isMember(const std::string &key) const
+bool CVariant::isMember(const std::string& key) const
 {
   return std::visit(overloaded{[&](const VariantMap& m) { return m.find(key) != m.end(); },
                                [](const auto&) { return false; }},

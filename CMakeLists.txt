@@ -43,10 +43,13 @@ add_definitions(-DXBOX -DNXDK -DMEMP_NUM_NETBUF=6 -DMEMP_NUM_NETCONN=6)
 add_executable(updater
     src/filesystem/HDDirectory.cpp
     src/filesystem/HDFile.cpp
+    src/threads/Thread.cpp
     src/utils/CustomLaunch.cpp
     src/utils/JSONVariantParser.cpp
     src/utils/StringUtils.cpp
     src/utils/Variant.cpp
+    src/utils/Version.cpp
+    src/Application.cpp
     src/Downloader.cpp
     src/main.cpp
     src/Updater.cpp
@@ -55,6 +58,15 @@ add_executable(updater
 )
 
 target_include_directories(updater PRIVATE src lib)
+
+# Bring in SDL2 support
+target_include_directories(updater PRIVATE
+    ${NXDK_DIR}/lib/sdl/SDL2/include
+    ${NXDK_DIR}/lib/sdl/SDL_ttf)
+target_link_libraries(updater PRIVATE
+    ${NXDK_DIR}/lib/libSDL2.lib
+    ${NXDK_DIR}/lib/libSDL_ttf.lib
+    ${NXDK_DIR}/lib/libfreetype.lib)
 
 # Bring in Microtar archive support
 add_library(microtar STATIC lib/microtar/microtar.c lib/microtar/microtar.h)

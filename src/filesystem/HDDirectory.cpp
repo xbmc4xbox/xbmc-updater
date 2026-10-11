@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2014-2018 Team Kodi
- *  This file is part of Kodi - https://kodi.tv
+ *  Copyright (C) 2023-2026 Team Xodi
+ *  This file is part of Xodi - https://xodi.tv
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
  *  See LICENSES/README.md for more information.
@@ -85,7 +85,7 @@ bool CHDDirectory::Create(const std::string& path)
 bool CHDDirectory::Exists(const std::string& strPath)
 {
   const DWORD attrs = GetFileAttributesA(strPath.c_str());
-  if(attrs == INVALID_FILE_ATTRIBUTES)
+  if (attrs == INVALID_FILE_ATTRIBUTES)
     return false;
 
   return FILE_ATTRIBUTE_DIRECTORY & attrs;

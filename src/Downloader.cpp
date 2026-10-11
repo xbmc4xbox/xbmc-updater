@@ -1,9 +1,9 @@
 /*
- *  Copyright (C) 2025-2025
- *  This file is part of XBMC - https://github.com/antonic901/xbmc4xbox-redux
+ *  Copyright (C) 2023-2026 Team Xodi
+ *  This file is part of Xodi - https://xodi.tv
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
- *  See LICENSE.md for more information.
+ *  See LICENSES/README.md for more information.
  */
 
 #include "Downloader.h"
@@ -14,10 +14,10 @@
 
 const unsigned char cert[] = {
 #embed "assets/cacert.pem" suffix(, ) // No suffix
-    0                                 // always null-terminated
+    0 // always null-terminated
 };
 
-static void mbedtls_debug(void *ctx, int level, const char *file, int line, const char *str)
+static void mbedtls_debug(void* ctx, int level, const char* file, int line, const char* str)
 {
   (void)ctx;
   (void)level;
@@ -53,10 +53,11 @@ void CDownloader::Initialize()
   if (mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, NULL, 0) != 0)
     return;
 
-  if (mbedtls_x509_crt_parse(&cacert, (const unsigned char *)cert, sizeof(cert)) != 0)
+  if (mbedtls_x509_crt_parse(&cacert, (const unsigned char*)cert, sizeof(cert)) != 0)
     return;
 
-  if (mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0)
+  if (mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM,
+                                  MBEDTLS_SSL_PRESET_DEFAULT) != 0)
     return;
 
   if (mbedtls_ssl_setup(&ssl, &conf) != 0)
@@ -109,24 +110,26 @@ bool CDownloader::Get(const std::string& strURL, std::string& strBody)
   }
 
   std::string strRequest = StringUtils::Format("GET %s HTTP/1.1\r\n"
-                                              "Host: %s\r\n"
-                                              "User-Agent: xbmc-updater\r\n"
-                                              "Accept: application/vnd.github+json\r\n"
-                                              "X-GitHub-Api-Version: 2022-11-28\r\n"
-                                              "Connection: close\r\n\r\n", strURL.c_str(), strHost.c_str());
-  if (mbedtls_ssl_write(&ssl, (const unsigned char *)strRequest.c_str(), strRequest.size()) <= 0)
+                                               "Host: %s\r\n"
+                                               "User-Agent: xbmc-updater\r\n"
+                                               "Accept: application/vnd.github+json\r\n"
+                                               "X-GitHub-Api-Version: 2022-11-28\r\n"
+                                               "Connection: close\r\n\r\n",
+                                               strURL.c_str(), strHost.c_str());
+  if (mbedtls_ssl_write(&ssl, (const unsigned char*)strRequest.c_str(), strRequest.size()) <= 0)
   {
     mbedtls_net_free(&server_fd);
     return false;
   }
 
   char buffer[4096];
-  ret = mbedtls_ssl_read(&ssl, (unsigned char *)buffer, sizeof(buffer));
+  ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer));
   if (ret <= 0)
     return false;
 
   std::string strHeader(buffer);
-  if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 4") || StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 5"))
+  if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 4") ||
+      StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 5"))
   {
     mbedtls_ssl_close_notify(&ssl);
     mbedtls_net_free(&server_fd);
@@ -168,7 +171,7 @@ bool CDownloader::Get(const std::string& strURL, std::string& strBody)
     }
     else
       strBody.append(buffer, ret);
-  } while ((ret = mbedtls_ssl_read(&ssl, (unsigned char *)buffer, sizeof(buffer))) > 0);
+  } while ((ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer))) > 0);
 
   mbedtls_ssl_close_notify(&ssl);
   mbedtls_net_free(&server_fd);
@@ -207,24 +210,26 @@ bool CDownloader::Download(const std::string& strDownloadLink, const std::string
   }
 
   std::string strRequest = StringUtils::Format("GET %s HTTP/1.1\r\n"
-                                              "Host: %s\r\n"
-                                              "User-Agent: xbmc-updater\r\n"
-                                              "Accept: application/octet-stream\r\n"
-                                              "X-GitHub-Api-Version: 2022-11-28\r\n"
-                                              "Connection: close\r\n\r\n", strDownloadLink.c_str(), strHost.c_str());
-  if (mbedtls_ssl_write(&ssl, (const unsigned char *)strRequest.c_str(), strRequest.size()) <= 0)
+                                               "Host: %s\r\n"
+                                               "User-Agent: xbmc-updater\r\n"
+                                               "Accept: application/octet-stream\r\n"
+                                               "X-GitHub-Api-Version: 2022-11-28\r\n"
+                                               "Connection: close\r\n\r\n",
+                                               strDownloadLink.c_str(), strHost.c_str());
+  if (mbedtls_ssl_write(&ssl, (const unsigned char*)strRequest.c_str(), strRequest.size()) <= 0)
   {
     mbedtls_net_free(&server_fd);
     return false;
   }
 
   char buffer[4096];
-  ret = mbedtls_ssl_read(&ssl, (unsigned char *)buffer, sizeof(buffer));
+  ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer));
   if (ret <= 0)
     return false;
 
   std::string strHeader(buffer);
-  if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 4") || StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 5"))
+  if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 4") ||
+      StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 5"))
     return false;
 
   if (StringUtils::StartsWithNoCase(strHeader, "HTTP/1.1 302"))
@@ -246,7 +251,8 @@ bool CDownloader::Download(const std::string& strDownloadLink, const std::string
   }
 
   DWORD written = 0;
-  HANDLE hFile = CreateFileA(strDownloadPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE hFile = CreateFileA(strDownloadPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                             FILE_ATTRIBUTE_NORMAL, NULL);
   if (hFile != INVALID_HANDLE_VALUE)
   {
     bool foundBody = false;
@@ -261,12 +267,13 @@ bool CDownloader::Download(const std::string& strDownloadLink, const std::string
         {
           foundBody = true;
           size_t iBodyPos = iPos + 4;
-          WriteFile(hFile, strHeaderCache.data() + iBodyPos, strHeaderCache.size() - iBodyPos, &written, NULL);
+          WriteFile(hFile, strHeaderCache.data() + iBodyPos, strHeaderCache.size() - iBodyPos,
+                    &written, NULL);
         }
       }
       else
         WriteFile(hFile, buffer, ret, &written, NULL);
-    } while ((ret = mbedtls_ssl_read(&ssl, (unsigned char *)buffer, sizeof(buffer))) > 0);
+    } while ((ret = mbedtls_ssl_read(&ssl, (unsigned char*)buffer, sizeof(buffer))) > 0);
     CloseHandle(hFile);
   }
 
