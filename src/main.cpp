@@ -28,7 +28,23 @@ int main(void)
 {
   if (!XVideoSetMode(1280, 720, 32, REFRESH_DEFAULT))
   {
-    return 0;
+    if (!XVideoSetMode(640, 480, 32, REFRESH_DEFAULT))
+    {
+      VIDEO_MODE xmode;
+      void *p = NULL;
+      while (XVideoListModes(&xmode, 0, 0, &p))
+      {
+        // ignore 1080i
+        if (xmode.width == 1080)
+          continue;
+        // 720x480 doesnt work on pbkit for some reason
+        if (xmode.width == 720)
+          continue;
+
+        XVideoSetMode(xmode.width, xmode.height, xmode.bpp, xmode.refresh);;
+        break;
+      }
+    }
   }
 
   char launchPath[MAX_PATH];
