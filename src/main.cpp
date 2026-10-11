@@ -81,7 +81,7 @@ int main(void)
     return 1;
   }
 
-  CUpdater* m_updater = new CUpdater;
+  CUpdater* m_updater = new CUpdater(strLaunchPath);
   m_updater->RegisterListener(m_application);
   m_updater->Start();
 
@@ -96,6 +96,5 @@ int main(void)
   delete m_application;
   m_application = nullptr;
 
-  Sleep(5000);
   return 1;
 }

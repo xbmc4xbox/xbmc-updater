@@ -40,8 +40,9 @@ static const std::map<UpdaterState, UpdaterState> stateTransitions =
   {UpdaterState::COPYING_USERDATA, UpdaterState::FINISHED}
 };
 
-CUpdater::CUpdater()
+CUpdater::CUpdater(const std::string& strRootPath)
 {
+  m_strRootPath = strRootPath;
 }
 
 CUpdater::~CUpdater()
@@ -81,6 +82,10 @@ void CUpdater::Process()
         break;
 
       case UpdaterState::FINISHED:
+        m_bStop = true;
+        m_listener->OnProgress(0, UpdaterState::FINISHED);
+        break;
+
       default:
         m_bStop = true;
     }
@@ -221,7 +226,7 @@ bool CUpdater::CheckForUpdate()
       page++;
     } while (data.size() != 0);
 
-    m_listener->OnError(UpdaterError::FATAL);
+    m_listener->OnError(UpdaterError::UP_TO_DATE);
     return false;
   }
 
@@ -242,17 +247,17 @@ bool CUpdater::CheckForUpdate()
   std::ifstream file("Z:\\version.txt", std::ios::in);
   if (file.is_open())
   {
-    std::getline(file, m_upstreamVersion);
+    std::getline(file, m_upstreamRevision);
     file.close();
   }
 
-  if (m_upstreamVersion.empty() || m_revision.empty())
+  if (m_upstreamRevision.empty() || m_revision.empty())
   {
     m_listener->OnError(UpdaterError::FATAL);
     return false;
   }
 
-  if (StringUtils::EqualsNoCase(m_upstreamVersion, m_revision))
+  if (StringUtils::EqualsNoCase(m_upstreamRevision, m_revision))
   {
     m_listener->OnError(UpdaterError::UP_TO_DATE);
     return false;
@@ -289,9 +294,18 @@ bool CUpdater::Extract()
   int ret = mtar_open(&tar, "Z:\\Xodi.tar", "r");
   if (ret != MTAR_ESUCCESS)
   {
-    m_listener->OnError(UpdaterError::NETWORK_ERROR);
+    m_listener->OnError(UpdaterError::EXTRACT_ERROR);
     return false;
   }
+
+  FILE* destination_file = nullptr;
+  const auto failExtraction = [&]() {
+    if (destination_file)
+      fclose(destination_file);
+    mtar_close(&tar);
+    m_listener->OnError(UpdaterError::EXTRACT_ERROR);
+    return false;
+  };
 
   /* Extract new build to E:\Xodi_NEW\ */
   m_strExtractPath = m_strRootPath;
@@ -302,8 +316,17 @@ bool CUpdater::Extract()
   std::string strLongPath;
   char buffer[4096];
   mtar_header_t header;
-  while ((mtar_read_header(&tar, &header)) != MTAR_ENULLRECORD)
+  while (true)
   {
+    ret = mtar_read_header(&tar, &header);
+    if (ret == MTAR_ENULLRECORD)
+    {
+      if (!strLongPath.empty())
+        return failExtraction();
+      break;
+    }
+    if (ret != MTAR_ESUCCESS)
+      return failExtraction();
     std::string strFile;
     if (!strLongPath.empty())
     {
@@ -320,11 +343,14 @@ bool CUpdater::Extract()
     if (strcmp(header.name, "././@LongLink") == 0)
     {
       char longPath[MAX_PATH];
-      mtar_read_data(&tar, longPath, header.size);
+      if (header.size == 0 || header.size >= sizeof(longPath))
+        return failExtraction();
+      if (mtar_read_data(&tar, longPath, header.size) != MTAR_ESUCCESS)
+        return failExtraction();
       longPath[header.size] = '\0';
       strLongPath = longPath;
-      memset(longPath, 0, sizeof(longPath));
-      mtar_next(&tar);
+      if (strLongPath.empty() || mtar_next(&tar) != MTAR_ESUCCESS)
+        return failExtraction();
       continue;
     }
 
@@ -332,9 +358,7 @@ bool CUpdater::Extract()
     {
       if (!CHDDirectory::Create(strFile))
       {
-        m_listener->OnError(UpdaterError::EXTRACT_ERROR);
-        mtar_close(&tar);
-        return false;
+        return failExtraction();
       }
     }
     else
@@ -344,12 +368,10 @@ bool CUpdater::Extract()
         CFileHD::Delete(strFile);
       }
 
-      FILE *destination_file = fopen(strFile.c_str(), "wb");
+      destination_file = fopen(strFile.c_str(), "wb");
       if (!destination_file)
       {
-        m_listener->OnError(UpdaterError::EXTRACT_ERROR);
-        mtar_close(&tar);
-        return false;
+        return failExtraction();
       }
 
       size_t remaining = header.size;
@@ -359,20 +381,28 @@ bool CUpdater::Extract()
         ret = mtar_read_data(&tar, buffer, chunk_size);
         if (ret != MTAR_ESUCCESS)
         {
-          m_listener->OnError(UpdaterError::EXTRACT_ERROR);
-          mtar_close(&tar);
-          return false;
+          return failExtraction();
         }
 
-        fwrite(buffer, 1, chunk_size, destination_file);
+        if (fwrite(buffer, 1, chunk_size, destination_file) != chunk_size)
+          return failExtraction();
         remaining -= chunk_size;
       }
 
-      fclose(destination_file);
+      const int closeResult = fclose(destination_file);
+      destination_file = nullptr;
+      if (closeResult != 0)
+        return failExtraction();
     }
-    mtar_next(&tar);
+    if (mtar_next(&tar) != MTAR_ESUCCESS)
+      return failExtraction();
   }
 
+  if (mtar_close(&tar) != MTAR_ESUCCESS)
+  {
+    m_listener->OnError(UpdaterError::EXTRACT_ERROR);
+    return false;
+  }
   return true;
 }
 
@@ -381,7 +411,7 @@ bool CUpdater::Install()
   m_listener->OnProgress(0, UpdaterState::INSTALLING_UPDATE);
 
   // Xodi 5.0+ keeps userdata inside UDATA, so no need to copy
-  if (StringUtils::StartsWithNoCase(m_upstreamRevision, "4."))
+  if (!m_upstreamVersion.empty() && StringUtils::StartsWithNoCase(m_upstreamVersion, "4."))
   {
     if (!CHDDirectory::Copy("D:\\home\\", m_strExtractPath))
     {
@@ -414,6 +444,8 @@ bool CUpdater::Install()
   CUtil::RemoveSlashAtEnd(strCurrentBuild);
   if (!CFileHD::Rename(strCurrentBuild, strPreviousBuild))
   {
+    // Attempt rollback to previous version
+    CFileHD::Rename(strPreviousBuild + "_OLD", strPreviousBuild);
     m_listener->OnError(UpdaterError::INSTALL_ERROR);
     return false;
   }

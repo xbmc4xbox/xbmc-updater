@@ -36,6 +36,10 @@ private:
 
   bool m_isDirty = true;
   bool m_waitingOnUserAction = false;
+  bool m_finished = false;
+
+  bool m_rebootTimerStarted = false;
+  Uint32 m_rebootStartedAt = 0;
 
   std::vector<SDL_Joystick*> m_joysticks;
 

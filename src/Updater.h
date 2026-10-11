@@ -14,7 +14,7 @@
 class CUpdater : public CThread
 {
 public:
-  CUpdater();
+  CUpdater(const std::string& strRootPath);
   ~CUpdater() override;
 
   void RegisterListener(IUpdater *listener);

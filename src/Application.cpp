@@ -125,11 +125,13 @@ void CApplication::Render()
 {
   bool isDirty;
   bool canReboot;
+  bool finished;
   std::string title, subtitle, body, small;
   int totalPercentage = 0;
   {
     std::lock_guard<std::mutex> lock(m_mutex);
     isDirty = m_isDirty;
+    finished = m_finished;
     canReboot = m_waitingOnUserAction && !m_isDirty;
     if (isDirty)
     {
@@ -199,7 +201,16 @@ void CApplication::Render()
     SDL_RenderFillRect(m_renderer, &progress);
 
     SDL_RenderPresent(m_renderer);
+    if (finished && !m_rebootTimerStarted)
+    {
+      m_rebootTimerStarted = true;
+      m_rebootStartedAt = SDL_GetTicks();
+    }
   }
+
+  if (m_rebootTimerStarted &&
+      static_cast<Uint32>(SDL_GetTicks() - m_rebootStartedAt) >= 5000u)
+    XReboot();
 }
 
 void CApplication::OnProgress(const unsigned int progress, const UpdaterState& state /* = UpdaterState::NONE */)
@@ -236,8 +247,8 @@ void CApplication::OnProgress(const unsigned int progress, const UpdaterState& s
       break;
 
     case UpdaterState::FINISHED:
+      m_finished = true;
       m_strBody = StringUtils::Format(BODY_TEMPLATE, UpdaterState::FINISHED, UpdaterState::FINISHED, "Xodi has been updated! Rebooting in 5s...");
-      m_bStop = true;
       break;
   }
 
