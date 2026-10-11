@@ -18,27 +18,24 @@
 #include "utils/Variant.h"
 #include "utils/Version.h"
 
+#include <algorithm>
 #include <assert.h>
-#include <stdio.h>
 #include <fstream>
 #include <map>
-#include <algorithm>
-#include <windows.h>
-
-#include <nxdk/net.h>
+#include <stdio.h>
 
 #include <microtar/microtar.h>
+#include <nxdk/net.h>
+#include <windows.h>
 
-static const std::map<UpdaterState, UpdaterState> stateTransitions =
-{
-  {UpdaterState::NONE, UpdaterState::INITIALIZE},
-  {UpdaterState::INITIALIZE, UpdaterState::PREPARATION},
-  {UpdaterState::PREPARATION, UpdaterState::CHECKING_FOR_UPDATE},
-  {UpdaterState::CHECKING_FOR_UPDATE, UpdaterState::DOWNLOADING_UPDATE},
-  {UpdaterState::DOWNLOADING_UPDATE, UpdaterState::EXTRACTING_UPDATE},
-  {UpdaterState::EXTRACTING_UPDATE, UpdaterState::COPYING_USERDATA},
-  {UpdaterState::COPYING_USERDATA, UpdaterState::FINISHED}
-};
+static const std::map<UpdaterState, UpdaterState> stateTransitions = {
+    {UpdaterState::NONE, UpdaterState::INITIALIZE},
+    {UpdaterState::INITIALIZE, UpdaterState::PREPARATION},
+    {UpdaterState::PREPARATION, UpdaterState::CHECKING_FOR_UPDATE},
+    {UpdaterState::CHECKING_FOR_UPDATE, UpdaterState::DOWNLOADING_UPDATE},
+    {UpdaterState::DOWNLOADING_UPDATE, UpdaterState::EXTRACTING_UPDATE},
+    {UpdaterState::EXTRACTING_UPDATE, UpdaterState::COPYING_USERDATA},
+    {UpdaterState::COPYING_USERDATA, UpdaterState::FINISHED}};
 
 CUpdater::CUpdater(const std::string& strRootPath)
 {
@@ -93,7 +90,7 @@ void CUpdater::Process()
   }
 }
 
-void CUpdater::RegisterListener(IUpdater *listener)
+void CUpdater::RegisterListener(IUpdater* listener)
 {
   assert(listener != nullptr);
   m_listener = listener;
@@ -102,7 +99,8 @@ void CUpdater::RegisterListener(IUpdater *listener)
 std::string CUpdater::FindAsset(const std::string& strAsset, const std::string& strTag) const
 {
   std::string strBody;
-  std::string strURL = StringUtils::Format("https://api.github.com/repos/antonic901/xbmc4xbox-redux/releases/tags/%s", strTag.c_str());
+  std::string strURL = StringUtils::Format(
+      "https://api.github.com/repos/antonic901/xbmc4xbox-redux/releases/tags/%s", strTag.c_str());
   CDownloader downloader;
   if (!downloader.Get(strURL, strBody) || strBody.empty())
     return "";
@@ -118,7 +116,7 @@ std::string CUpdater::FindAsset(const std::string& strAsset, const std::string& 
       if (it->isObject() && it->isMember("url") && it->isMember("name"))
       {
         std::string url = (*it)["url"].asString();
-        std::string name =(*it)["name"].asString();
+        std::string name = (*it)["name"].asString();
         if (StringUtils::EqualsNoCase(name, strAsset))
           return url;
       }
@@ -181,7 +179,10 @@ bool CUpdater::CheckForUpdate()
     do
     {
       std::string response;
-      if (!downloader.Get(StringUtils::Format("https://api.github.com/repos/antonic901/xbmc4xbox-redux/releases?page=%i", page), response))
+      if (!downloader.Get(
+              StringUtils::Format(
+                  "https://api.github.com/repos/antonic901/xbmc4xbox-redux/releases?page=%i", page),
+              response))
       {
         m_listener->OnError(UpdaterError::FATAL);
         return false;
@@ -203,11 +204,12 @@ bool CUpdater::CheckForUpdate()
 
         std::vector<std::string> vecVersion = StringUtils::Split(strVersion, ".");
         if (vecVersion.size() != 3 ||
-            !std::all_of(vecVersion.begin(), vecVersion.end(), [](const std::string& part) {
-              return !part.empty() && std::all_of(part.begin(), part.end(), [](char c) {
-                return c >= '0' && c <= '9';
-              });
-            }))
+            !std::all_of(vecVersion.begin(), vecVersion.end(),
+                         [](const std::string& part)
+                         {
+                           return !part.empty() && std::all_of(part.begin(), part.end(), [](char c)
+                                                               { return c >= '0' && c <= '9'; });
+                         }))
           continue;
 
         int major = atoi(vecVersion[0].c_str());
@@ -270,7 +272,8 @@ bool CUpdater::Download()
 {
   m_listener->OnProgress(0, UpdaterState::DOWNLOADING_UPDATE);
 
-  std::string strAssetLink = FindAsset("Xodi.tar", m_updateChannel == "stable" ? m_upstreamVersion : m_updateChannel);
+  std::string strAssetLink =
+      FindAsset("Xodi.tar", m_updateChannel == "stable" ? m_upstreamVersion : m_updateChannel);
   if (strAssetLink.empty())
   {
     m_listener->OnError(UpdaterError::NETWORK_ERROR);
@@ -299,7 +302,8 @@ bool CUpdater::Extract()
   }
 
   FILE* destination_file = nullptr;
-  const auto failExtraction = [&]() {
+  const auto failExtraction = [&]()
+  {
     if (destination_file)
       fclose(destination_file);
     mtar_close(&tar);

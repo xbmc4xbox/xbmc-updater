@@ -55,25 +55,23 @@ public:
   CVariant(double value);
   CVariant(float value);
   CVariant(bool boolean);
-  CVariant(const char *str);
-  CVariant(const char *str, unsigned int length);
-  CVariant(const std::string &str);
-  CVariant(std::string &&str);
-  CVariant(const wchar_t *str);
-  CVariant(const wchar_t *str, unsigned int length);
-  CVariant(const std::wstring &str);
-  CVariant(std::wstring &&str);
-  CVariant(const std::vector<std::string> &strArray);
+  CVariant(const char* str);
+  CVariant(const char* str, unsigned int length);
+  CVariant(const std::string& str);
+  CVariant(std::string&& str);
+  CVariant(const wchar_t* str);
+  CVariant(const wchar_t* str, unsigned int length);
+  CVariant(const std::wstring& str);
+  CVariant(std::wstring&& str);
+  CVariant(const std::vector<std::string>& strArray);
   CVariant(std::vector<std::string>&& strArray);
-  CVariant(const std::map<std::string, std::string> &strMap);
+  CVariant(const std::map<std::string, std::string>& strMap);
   CVariant(std::map<std::string, std::string>&& strMap);
-  CVariant(const std::map<std::string, CVariant> &variantMap);
+  CVariant(const std::map<std::string, CVariant>& variantMap);
   CVariant(std::map<std::string, CVariant>&& variantMap);
-  CVariant(const CVariant &variant);
+  CVariant(const CVariant& variant);
   CVariant(CVariant&& rhs) noexcept;
   ~CVariant();
-
-
 
   bool isInteger() const;
   bool isSignedInteger() const;
@@ -107,18 +105,18 @@ public:
   const CVariant& operator[](unsigned int position) const&;
   CVariant operator[](unsigned int position) &&;
 
-  CVariant &operator=(const CVariant &rhs);
+  CVariant& operator=(const CVariant& rhs);
   CVariant& operator=(CVariant&& rhs) noexcept;
-  bool operator==(const CVariant &rhs) const;
-  bool operator!=(const CVariant &rhs) const { return !(*this == rhs); }
+  bool operator==(const CVariant& rhs) const;
+  bool operator!=(const CVariant& rhs) const { return !(*this == rhs); }
 
   void reserve(size_t length);
-  void push_back(const CVariant &variant);
-  void push_back(CVariant &&variant);
-  void append(const CVariant &variant);
-  void append(CVariant &&variant);
+  void push_back(const CVariant& variant);
+  void push_back(CVariant&& variant);
+  void append(const CVariant& variant);
+  void append(CVariant&& variant);
 
-  const char *c_str() const;
+  const char* c_str() const;
 
   void swap(CVariant& rhs) noexcept;
 
@@ -127,11 +125,11 @@ private:
   typedef std::map<std::string, CVariant> VariantMap;
 
 public:
-  typedef VariantArray::iterator        iterator_array;
-  typedef VariantArray::const_iterator  const_iterator_array;
+  typedef VariantArray::iterator iterator_array;
+  typedef VariantArray::const_iterator const_iterator_array;
 
-  typedef VariantMap::iterator          iterator_map;
-  typedef VariantMap::const_iterator    const_iterator_map;
+  typedef VariantMap::iterator iterator_map;
+  typedef VariantMap::const_iterator const_iterator_map;
 
   iterator_array begin_array();
   const_iterator_array begin_array() const;
@@ -146,10 +144,10 @@ public:
   unsigned int size() const;
   bool empty() const;
   void clear();
-  void erase(const std::string &key);
+  void erase(const std::string& key);
   void erase(unsigned int position);
 
-  bool isMember(const std::string &key) const;
+  bool isMember(const std::string& key) const;
 
   static CVariant ConstNullVariant;
 
@@ -185,4 +183,3 @@ private:
 #ifdef TARGET_WINDOWS_STORE
 #pragma pack(pop)
 #endif
-

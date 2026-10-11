@@ -11,6 +11,7 @@
 #include "utils/StringUtils.h"
 
 #include <vector>
+
 #include <hal/xbox.h>
 
 void CCustomLaunch::Set(const std::string& key, const std::string& value)
@@ -36,7 +37,7 @@ void CCustomLaunch::Set(const std::string& key, const std::string& value)
 bool CCustomLaunch::Read()
 {
   unsigned long launchType;
-  const unsigned char *launchData;
+  const unsigned char* launchData;
   if (XGetLaunchInfo(&launchType, &launchData) != ERROR_SUCCESS)
     return false;
 
@@ -44,10 +45,11 @@ bool CCustomLaunch::Read()
     return false;
 
 #ifndef _DEBUG
-  CUSTOM_LAUNCH_DATA *data = (CUSTOM_LAUNCH_DATA*)launchData;
+  CUSTOM_LAUNCH_DATA* data = (CUSTOM_LAUNCH_DATA*)launchData;
   std::string strInput = data->reserved;
 #else
-  std::string strInput = "channel=stable&version=4.0.0&revision=8d97e131&perform_major_upgrade=false";
+  std::string strInput =
+      "channel=stable&version=4.0.0&revision=8d97e131&perform_major_upgrade=false";
 #endif
   std::vector<std::string> params = StringUtils::Split(strInput, "&");
   for (auto param : params)

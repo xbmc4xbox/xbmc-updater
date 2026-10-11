@@ -13,7 +13,7 @@
 const std::string CUtil::GetFileName(const std::string& strFileNameAndPath)
 {
   const size_t slash = strFileNameAndPath.find_last_of("/\\");
-  return strFileNameAndPath.substr(slash+1);
+  return strFileNameAndPath.substr(slash + 1);
 }
 
 void CUtil::AddSlashAtEnd(std::string& strFolder)

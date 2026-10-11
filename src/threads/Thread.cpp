@@ -25,10 +25,12 @@ void CThread::Start()
 
   m_bStop = false;
   m_running = true;
-  m_thread = std::thread([this]() {
-    Process();
-    m_running = false;
-  });
+  m_thread = std::thread(
+      [this]()
+      {
+        Process();
+        m_running = false;
+      });
 }
 
 void CThread::StopThread(bool wait)

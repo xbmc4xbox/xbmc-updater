@@ -9,6 +9,7 @@
 #pragma once
 
 #include <string>
+
 #include <windows.h>
 
 typedef struct _CUSTOM_LAUNCH_DATA

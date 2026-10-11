@@ -85,7 +85,7 @@ bool CHDDirectory::Create(const std::string& path)
 bool CHDDirectory::Exists(const std::string& strPath)
 {
   const DWORD attrs = GetFileAttributesA(strPath.c_str());
-  if(attrs == INVALID_FILE_ATTRIBUTES)
+  if (attrs == INVALID_FILE_ATTRIBUTES)
     return false;
 
   return FILE_ATTRIBUTE_DIRECTORY & attrs;

@@ -8,15 +8,15 @@
 
 #pragma once
 
+#include "interfaces/IUpdater.h"
+
 #include <atomic>
-#include <vector>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include <SDL.h>
 #include <SDL_ttf.h>
-
-#include "interfaces/IUpdater.h"
 
 class CApplication : public IUpdater
 {
@@ -28,11 +28,13 @@ public:
   void Render();
   bool IsStopping() { return m_bStop; };
 
-  void OnProgress(const unsigned int progress, const UpdaterState& state = UpdaterState::NONE) override;
+  void OnProgress(const unsigned int progress,
+                  const UpdaterState& state = UpdaterState::NONE) override;
   void OnError(const UpdaterError& error) override;
 
 private:
-  void Text(TTF_Font* font, const std::string& text, int x, int y, int maxWidth, bool alignRight = false);
+  void Text(
+      TTF_Font* font, const std::string& text, int x, int y, int maxWidth, bool alignRight = false);
 
   bool m_isDirty = true;
   bool m_waitingOnUserAction = false;

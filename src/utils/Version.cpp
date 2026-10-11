@@ -7,6 +7,7 @@
  */
 
 #include "Version.h"
+
 #include "utils/StringUtils.h"
 
 #include <ctype.h>
@@ -24,14 +25,12 @@ const std::string VALID_ADDON_VERSION_CHARACTERS =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.+_@~";
 } // namespace
 
-CVersion::CVersion(const std::string& version)
-  : mEpoch(0), mUpstream(version)
+CVersion::CVersion(const std::string& version) : mEpoch(0), mUpstream(version)
 {
   Initialize();
 }
 
-CVersion::CVersion(const char* version)
-  : mEpoch(0), mUpstream(std::string(version ? version : ""))
+CVersion::CVersion(const char* version) : mEpoch(0), mUpstream(std::string(version ? version : ""))
 {
   Initialize();
 }
@@ -168,9 +167,7 @@ std::string CVersion::asString() const
   return out;
 }
 
-bool CVersion::SplitFileName(std::string& ID,
-                                  std::string& version,
-                                  const std::string& filename)
+bool CVersion::SplitFileName(std::string& ID, std::string& version, const std::string& filename)
 {
   size_t dpos = filename.rfind('-');
   if (dpos == std::string::npos)

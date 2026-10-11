@@ -24,7 +24,7 @@ using namespace std;
 
 #define FORMAT_BLOCK_SIZE 512 // # of bytes for initial allocation for printf
 
-string StringUtils::Format(const char *fmt, ...)
+string StringUtils::Format(const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
@@ -34,7 +34,7 @@ string StringUtils::Format(const char *fmt, ...)
   return str;
 }
 
-string StringUtils::FormatV(const char *fmt, va_list args)
+string StringUtils::FormatV(const char* fmt, va_list args)
 {
   if (!fmt || !fmt[0])
     return "";
@@ -44,7 +44,7 @@ string StringUtils::FormatV(const char *fmt, va_list args)
 
   while (1)
   {
-    char *cstr = reinterpret_cast<char*>(malloc(sizeof(char) * size));
+    char* cstr = reinterpret_cast<char*>(malloc(sizeof(char) * size));
     if (!cstr)
       return "";
 
@@ -60,11 +60,11 @@ string StringUtils::FormatV(const char *fmt, va_list args)
     }
     free(cstr);
 #ifndef TARGET_WINDOWS
-    if (nActual > -1)                   // Exactly what we will need (glibc 2.1)
+    if (nActual > -1) // Exactly what we will need (glibc 2.1)
       size = nActual + 1;
-    else                                // Let's try to double the size (glibc 2.0)
+    else // Let's try to double the size (glibc 2.0)
       size *= 2;
-#else  // TARGET_WINDOWS
+#else // TARGET_WINDOWS
     va_copy(argCopy, args);
     size = _vscprintf(fmt, argCopy);
     va_end(argCopy);
@@ -85,7 +85,7 @@ std::string StringUtils::ToLower(const std::string& str)
   return result;
 }
 
-bool StringUtils::EqualsNoCase(const std::string &str1, const std::string &str2)
+bool StringUtils::EqualsNoCase(const std::string& str1, const std::string& str2)
 {
   // before we do the char-by-char comparison, first compare sizes of both strings.
   // This led to a 33% improvement in benchmarking on average. (size() just returns a member of std::string)
@@ -94,25 +94,28 @@ bool StringUtils::EqualsNoCase(const std::string &str1, const std::string &str2)
   return EqualsNoCase(str1.c_str(), str2.c_str());
 }
 
-bool StringUtils::EqualsNoCase(const std::string &str1, const char *s2)
+bool StringUtils::EqualsNoCase(const std::string& str1, const char* s2)
 {
   return EqualsNoCase(str1.c_str(), s2);
 }
 
-bool StringUtils::EqualsNoCase(const char *s1, const char *s2)
+bool StringUtils::EqualsNoCase(const char* s1, const char* s2)
 {
   char c2; // we need only one char outside the loop
   do
   {
     const char c1 = *s1++; // const local variable should help compiler to optimize
     c2 = *s2++;
-    if (c1 != c2 && ::tolower(c1) != ::tolower(c2)) // This includes the possibility that one of the characters is the null-terminator, which implies a string mismatch.
+    if (c1 != c2 &&
+        ::tolower(c1) !=
+            ::tolower(
+                c2)) // This includes the possibility that one of the characters is the null-terminator, which implies a string mismatch.
       return false;
   } while (c2 != '\0'); // At this point, we know c1 == c2, so there's no need to test them both.
   return true;
 }
 
-int StringUtils::Replace(string &str, char oldChar, char newChar)
+int StringUtils::Replace(string& str, char oldChar, char newChar)
 {
   int replacedChars = 0;
   for (string::iterator it = str.begin(); it != str.end(); ++it)
@@ -127,7 +130,7 @@ int StringUtils::Replace(string &str, char oldChar, char newChar)
   return replacedChars;
 }
 
-int StringUtils::Replace(std::string &str, const std::string &oldStr, const std::string &newStr)
+int StringUtils::Replace(std::string& str, const std::string& oldStr, const std::string& newStr)
 {
   if (oldStr.empty())
     return 0;
@@ -145,17 +148,17 @@ int StringUtils::Replace(std::string &str, const std::string &oldStr, const std:
   return replacedChars;
 }
 
-bool StringUtils::StartsWithNoCase(const std::string &str1, const std::string &str2)
+bool StringUtils::StartsWithNoCase(const std::string& str1, const std::string& str2)
 {
   return StartsWithNoCase(str1.c_str(), str2.c_str());
 }
 
-bool StringUtils::StartsWithNoCase(const std::string &str1, const char *s2)
+bool StringUtils::StartsWithNoCase(const std::string& str1, const char* s2)
 {
   return StartsWithNoCase(str1.c_str(), s2);
 }
 
-bool StringUtils::StartsWithNoCase(const char *s1, const char *s2)
+bool StringUtils::StartsWithNoCase(const char* s1, const char* s2)
 {
   while (*s2 != '\0')
   {
@@ -167,7 +170,9 @@ bool StringUtils::StartsWithNoCase(const char *s1, const char *s2)
   return true;
 }
 
-std::vector<std::string> StringUtils::Split(const std::string& input, const std::string& delimiter, unsigned int iMaxStrings /* = 0 */)
+std::vector<std::string> StringUtils::Split(const std::string& input,
+                                            const std::string& delimiter,
+                                            unsigned int iMaxStrings /* = 0 */)
 {
   std::vector<std::string> results;
   if (input.empty())
@@ -196,7 +201,9 @@ std::vector<std::string> StringUtils::Split(const std::string& input, const std:
   return results;
 }
 
-std::vector<std::string> StringUtils::Split(const std::string& input, const char delimiter, size_t iMaxStrings /*= 0*/)
+std::vector<std::string> StringUtils::Split(const std::string& input,
+                                            const char delimiter,
+                                            size_t iMaxStrings /*= 0*/)
 {
   std::vector<std::string> results;
   if (input.empty())

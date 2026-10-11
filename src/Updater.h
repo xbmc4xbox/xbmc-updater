@@ -17,7 +17,7 @@ public:
   CUpdater(const std::string& strRootPath);
   ~CUpdater() override;
 
-  void RegisterListener(IUpdater *listener);
+  void RegisterListener(IUpdater* listener);
 
 protected:
   void Process() override;
@@ -45,7 +45,8 @@ private:
   std::string m_revision; // 8cfcde4
   std::string m_upstreamRevision; // 71162ed
 
-  bool m_performMajorUpgrade = false; // if false, updater wont do major upgrades (ex. 4.x.x -> 5.x.x)
+  bool m_performMajorUpgrade =
+      false; // if false, updater wont do major upgrades (ex. 4.x.x -> 5.x.x)
 
   IUpdater* m_listener;
 

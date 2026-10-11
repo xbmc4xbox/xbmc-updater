@@ -6,23 +6,23 @@
  *  See LICENSES/README.md for more information.
  */
 
-#include <string>
-#include <vector>
-
-#include <hal/video.h>
-#include <hal/xbox.h>
-#include <hal/debug.h>
-#include <nxdk/mount.h>
-#include <nxdk/path.h>
-#include <nxdk/net.h>
-#include <xboxkrnl/xboxkrnl.h>
-#include <windows.h>
-
 #include "Application.h"
 #include "Updater.h"
 #include "Util.h"
 #include "filesystem/HDDirectory.h"
 #include "utils/StringUtils.h"
+
+#include <string>
+#include <vector>
+
+#include <hal/debug.h>
+#include <hal/video.h>
+#include <hal/xbox.h>
+#include <nxdk/mount.h>
+#include <nxdk/net.h>
+#include <nxdk/path.h>
+#include <windows.h>
+#include <xboxkrnl/xboxkrnl.h>
 
 int main(void)
 {
@@ -31,7 +31,7 @@ int main(void)
     if (!XVideoSetMode(640, 480, 32, REFRESH_DEFAULT))
     {
       VIDEO_MODE xmode;
-      void *p = NULL;
+      void* p = NULL;
       while (XVideoListModes(&xmode, 0, 0, &p))
       {
         // ignore 1080i
@@ -41,7 +41,8 @@ int main(void)
         if (xmode.width == 720)
           continue;
 
-        XVideoSetMode(xmode.width, xmode.height, xmode.bpp, xmode.refresh);;
+        XVideoSetMode(xmode.width, xmode.height, xmode.bpp, xmode.refresh);
+        ;
         break;
       }
     }

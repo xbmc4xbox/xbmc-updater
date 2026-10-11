@@ -39,6 +39,7 @@ class IUpdater
 public:
   virtual ~IUpdater() = default;
 
-  virtual void OnProgress(const unsigned int progress, const UpdaterState& state = UpdaterState::NONE) = 0;
+  virtual void OnProgress(const unsigned int progress,
+                          const UpdaterState& state = UpdaterState::NONE) = 0;
   virtual void OnError(const UpdaterError& error) = 0;
 };

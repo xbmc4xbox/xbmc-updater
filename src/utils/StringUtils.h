@@ -31,17 +31,21 @@
 class StringUtils
 {
 public:
-  static std::string Format(PRINTF_FORMAT_STRING const char *fmt, ...) PARAM1_PRINTF_FORMAT;
-  static std::string FormatV(PRINTF_FORMAT_STRING const char *fmt, va_list args);
+  static std::string Format(PRINTF_FORMAT_STRING const char* fmt, ...) PARAM1_PRINTF_FORMAT;
+  static std::string FormatV(PRINTF_FORMAT_STRING const char* fmt, va_list args);
   static std::string ToLower(const std::string& str);
-  static bool EqualsNoCase(const std::string &str1, const std::string &str2);
-  static bool EqualsNoCase(const std::string &str1, const char *s2);
-  static bool EqualsNoCase(const char *s1, const char *s2);
-  static int Replace(std::string &str, char oldChar, char newChar);
-  static int Replace(std::string &str, const std::string &oldStr, const std::string &newStr);
-  static bool StartsWithNoCase(const std::string &str1, const std::string &str2);
-  static bool StartsWithNoCase(const std::string &str1, const char *s2);
-  static bool StartsWithNoCase(const char *s1, const char *s2);
-  static std::vector<std::string> Split(const std::string& input, const std::string& delimiter, unsigned int iMaxStrings = 0);
-  static std::vector<std::string> Split(const std::string& input, const char delimiter, size_t iMaxStrings = 0);
+  static bool EqualsNoCase(const std::string& str1, const std::string& str2);
+  static bool EqualsNoCase(const std::string& str1, const char* s2);
+  static bool EqualsNoCase(const char* s1, const char* s2);
+  static int Replace(std::string& str, char oldChar, char newChar);
+  static int Replace(std::string& str, const std::string& oldStr, const std::string& newStr);
+  static bool StartsWithNoCase(const std::string& str1, const std::string& str2);
+  static bool StartsWithNoCase(const std::string& str1, const char* s2);
+  static bool StartsWithNoCase(const char* s1, const char* s2);
+  static std::vector<std::string> Split(const std::string& input,
+                                        const std::string& delimiter,
+                                        unsigned int iMaxStrings = 0);
+  static std::vector<std::string> Split(const std::string& input,
+                                        const char delimiter,
+                                        size_t iMaxStrings = 0);
 };
